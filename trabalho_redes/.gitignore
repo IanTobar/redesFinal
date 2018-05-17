@@ -51,12 +51,16 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+#Arquivos do Netbeans
+
 nbproject/private/
 build/
 nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+nbactions.xml
+nb-configuration.xml
 
 
 
