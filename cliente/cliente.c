@@ -117,17 +117,17 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
     resposta rsp;
     int aux, n, i = 0;
     char vetor[90];
-    memset(&rsp, 0x0, sizeof (rsp)); //INICIA BUFFER
-    aux = sizeof (*remoteServAddr); //RECEBER RESPOSTA DO SERVIDOR
+    memset(&rsp, 0x0, sizeof (rsp)); //Inicia Buffer
+    aux = sizeof (*remoteServAddr); //Recebe resposta
     n = recvfrom(sock, &rsp, sizeof (resposta), 0, (struct sockaddr *) remoteServAddr, &aux);
-    if (n < 0) //VERIFICA RESPOSTA DO SERVIDOR
-        printf("<<ERRO>> RESPOSTA DO SERVIDOR NAO RECEBIDA!\n");
+    if (n < 0) //Verifica Resposta
+        printf("Resposta do Servidor nao Recebida!\n");
     else {
-        if (rsp.status) //VERIFICA STATUS DA RESPOSTA DO SERVIDOR
+        if (rsp.status) //Verifica status da Resposta
         {
-            printf("<<INFO>> PACOTE %d ENTREGUE AO SERVIDOR..\n", numerosequencia);
-            *indice = fread(&vetor, sizeof (char), 90, arquivo); //LÊ PROXIMA SEQUÊNCIA DE DADOS A SEREM ENVIADAS E ADIONA AO 'INDICE' A QUANTIDADE DE BYTES CARREGADOS
-            if (*indice == 0) { //SE 'INDICE'=0 ADICIONA A FLAG 'EXIT' A VARIAVEL DE DADOS DO PACOTE PARA O SERVIDOR ENCERRAR CONEXÃO
+            printf("Pacote %d Entregue ao Servidor..\n", numerosequencia);
+            *indice = fread(&vetor, sizeof (char), 90, arquivo); //Lê Proxima sequencia de Dados a serem enviadas e adiciona ao 'INDICE' a quantidade de bytes carregados
+            if (*indice == 0) { //Se 'INDICE'=0 ADICIONA A FLAG 'EXIT' a Variavel de dados do Pacote para o Servidor encerrar conexão
                 free(mensagem);
                 mensagem = (char*) calloc(4, sizeof (char));
                 mensagem[0] = 'E';
@@ -136,14 +136,14 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
                 mensagem[3] = 'T';
             } else {
                 free(mensagem);
-                mensagem = (char*) calloc(*indice, sizeof (char)); //SE 'INDICE'>0 CRIA VETOR COM TAMANHO ADEQUADO DOS BYTES
+                mensagem = (char*) calloc(*indice, sizeof (char)); //SE 'INDICE'>0 cria vetor com tamanho adequado de bytes
                 for (i = 0; i < (*indice); i++) {
                     mensagem[i] = vetor[i];
                 }
             }
             return numerosequencia + 1;
         } else {
-            printf("<<INFO>> PACOTE %d COM ERRO DETECTADO PELO SERVIDORcom erro detectado pelo servidor. Reenvio em andamento..\n", numerosequencia);
+            printf("Pacote %d com erro detectado pelo servidor. Reenvio em andamento\n", numerosequencia);
             return numerosequencia;
         }
     }
