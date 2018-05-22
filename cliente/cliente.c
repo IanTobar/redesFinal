@@ -11,6 +11,19 @@
 #define TAMBUFFER 1024  //Tamanho maximo do buffer
 #define PORTA 5000   //A porta na qual sera enviado os dados
 
+typedef struct pacote {
+    int numsequencial; //Número de sequência do pacote
+    long int check_sum; //Soma de Verificação do Pacote
+    int dimensao; //DIMENSAO QUE CONTEM A VARIÁVEL DE DADOS
+    char palavra[90]; //vetor de dados a serem enviados
+} pacote;
+
+typedef struct resposta {
+    int status; //SUCESSO=0, FALHA=1
+    int num_sequencial; //Número de Sequência do Pacote
+} resposta;
+
+
 /////////////////////Funções////////////////////////
 
 long int checksum(char palavra[], int dimensao) {
@@ -23,6 +36,119 @@ long int checksum(char palavra[], int dimensao) {
     }
     return soma; //retorna a soma (checksum)
 }
+
+struct hostent * conectarHost(char *dadoshost) {
+    struct hostent * host;
+    host = gethostbyname(dadoshost);
+    if (host == NULL) {
+        printf("\n<<ERRO>> Host Invalido '%s' \n", dadoshost);
+        exit(1);
+    }
+    printf("\n Preparando Trasferencia dos Dados para: '%s'..\n", host->h_name); //Mensagem de Inicio ao usuário
+    return host;
+}
+
+
+//FUNÇÃO CRIAR SOCKET
+
+int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
+    int sock, opt;
+    /*
+     cria um ponto de comunicação
+    socket(int domain, int type, int protocol)
+     int domain -> dominino da comunicação (tipo da comunicação)
+     type -> tipo de socket
+     protocol -> procolo
+     */
+
+    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    if (sock <= 0) {
+        printf("Erro na abertura do socket: %s\n", strerror(errno)); //mensagem de erro ao abrir socket
+        exit(1); //sai do programa
+    }
+    //Temporizador
+    tempo->tv_sec = 0;
+    tempo->tv_usec = 400000;
+    //Definir o temporizador de recepção
+    opt = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *) tempo, sizeof (*tempo));
+    //verificar a definição do temporizador 0 = Ok, -1 = Falha
+    if (opt < 0)
+        printf("Definir temporizador de recepção falhou\n");
+    vincularPorta(cliAddr); //Vincula Porta
+    return sock;
+}
+
+void vincularPorta(struct sockaddr_in serv_addr) {
+    memset((char *) &serv_addr, 0, sizeof (serv_addr)); //define um buffer (Destino, caracter, tamanho)
+    serv_addr.sin_family = AF_INET; //familia de endereços
+    serv_addr.sin_port = htons(PORTA); //define a porta
+}
+
+
+
+
+//Gera Pacote para enviar
+
+pacote geraPacote(char *mensagem, int numerosequencia, int *indice) {
+    pacote pac;
+    int i = 0;
+    for (i = 0; i < (*indice); i++) //ADICIONA OS DADOS AO PACOTE
+        pac.palavra[i] = mensagem[i];
+    pac.check_sum = checksum(pac.palavra, *indice); //Chama checksum
+    pac.dimensao = *indice; //Define Dimensão (Número de Bytes)
+    pac.numsequencial = numerosequencia; //Define Número de Sequência do Pacote
+    return pac;
+}
+
+
+
+//Envia Pacote ao Servidor 
+
+int enviar_pacote(int sock, pacote *pac, struct sockaddr_in remoteServAddr) {
+    int resultado;
+    resultado = sendto(sock, pac, sizeof (pacote) + 1, 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr)); //ENVIA PACOTE
+    if (resultado < 0) //VERIFICA SE O ENVIO FOI REALIZADO
+        printf("\n: Falha ao Enviar Pacote %d\n", pac->numsequencial);
+    return resultado;
+}
+
+int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remoteServAddr, int sock, int numerosequencia, int *indice) {
+    resposta rsp;
+    int aux, n, i = 0;
+    char vetor[90];
+    memset(&rsp, 0x0, sizeof (rsp)); //INICIA BUFFER
+    aux = sizeof (*remoteServAddr); //RECEBER RESPOSTA DO SERVIDOR
+    n = recvfrom(sock, &rsp, sizeof (resposta), 0, (struct sockaddr *) remoteServAddr, &aux);
+    if (n < 0) //VERIFICA RESPOSTA DO SERVIDOR
+        printf("<<ERRO>> RESPOSTA DO SERVIDOR NAO RECEBIDA!\n");
+    else {
+        if (rsp.status) //VERIFICA STATUS DA RESPOSTA DO SERVIDOR
+        {
+            printf("<<INFO>> PACOTE %d ENTREGUE AO SERVIDOR..\n", numerosequencia);
+            *indice = fread(&vetor, sizeof (char), 90, arquivo); //LÊ PROXIMA SEQUÊNCIA DE DADOS A SEREM ENVIADAS E ADIONA AO 'INDICE' A QUANTIDADE DE BYTES CARREGADOS
+            if (*indice == 0) { //SE 'INDICE'=0 ADICIONA A FLAG 'EXIT' A VARIAVEL DE DADOS DO PACOTE PARA O SERVIDOR ENCERRAR CONEXÃO
+                free(mensagem);
+                mensagem = (char*) calloc(4, sizeof (char));
+                mensagem[0] = 'E';
+                mensagem[1] = 'X';
+                mensagem[2] = 'I';
+                mensagem[3] = 'T';
+            } else {
+                free(mensagem);
+                mensagem = (char*) calloc(*indice, sizeof (char)); //SE 'INDICE'>0 CRIA VETOR COM TAMANHO ADEQUADO DOS BYTES
+                for (i = 0; i < (*indice); i++) {
+                    mensagem[i] = vetor[i];
+                }
+            }
+            return numerosequencia + 1;
+        } else {
+            printf("<<INFO>> PACOTE %d COM ERRO DETECTADO PELO SERVIDORcom erro detectado pelo servidor. Reenvio em andamento..\n", numerosequencia);
+            return numerosequencia;
+        }
+    }
+}
+
 
 
 //função para inicializar conexão
@@ -52,6 +178,7 @@ void funcInicio() {
     memset((char *) &serv_addr, 0, sizeof (serv_addr)); //define um buffer (Destino, caracter, tamanho)
     serv_addr.sin_family = AF_INET; //familia de endereços
     serv_addr.sin_port = htons(PORTA); //define a porta
+
     /*
     converte e retorna o endereço passado como parâmetro para um ordenamento de byte significativo. Retorna
      * o na ordem de bytes da rede.
