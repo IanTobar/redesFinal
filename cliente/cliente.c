@@ -19,9 +19,10 @@ typedef struct pacote {
 } pacote;
 
 typedef struct resposta {
-    int status; //SUCESSO=0, FALHA=1
+    int status; //SUCESSO=1, FALHA=0
     int num_sequencial; //Número de Sequência do Pacote
 } resposta;
+
 
 
 /////////////////////Funções////////////////////////
@@ -44,9 +45,13 @@ struct hostent * conectarHost(char *dadoshost) {
         printf("\n<<ERRO>> Host Invalido '%s' \n", dadoshost);
         exit(1);
     }
-    printf("\n Preparando Trasferencia dos Dados para: '%s'..\n", host->h_name); //Mensagem de Inicio ao usuário
+    //    printf("\n Preparando Trasferencia dos Dados para: '%s'..\n", host->h_name); //Mensagem de Inicio ao usuário
     return host;
 }
+
+
+
+
 
 
 //FUNÇÃO CRIAR SOCKET
@@ -168,7 +173,6 @@ void funcInicio() {
      protocol -> procolo
      */
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
     //verifica se o socket foi aberto corretamente
     if (sock <= 0) {
         printf("Erro na abertura do socket: %s\n", strerror(errno)); //mensagem de erro ao abrir socket
@@ -217,18 +221,92 @@ void funcInicio() {
                 (socklen_t *) & slen) == -1) {
             printf("Erro ao enviar pacote");
         }
-
         //printa os dados recebidos
         printf("%s\n", buffer);
     }
 
 }
 
-int main() {
-
-    funcInicio();
-    return 0;
+FILE * abrir_arquivo() {
+    FILE *arquivo;
+    char *caminho;
+    caminho = calloc(40, sizeof (char));
+    printf("DIGITE O NOME DO ARQUIVO: "); //SOLICITA NOME DO ARQUIVO QUE SER� RECEBIDO
+    scanf("%s", caminho);
+    arquivo = fopen(caminho, "rb");
+    if (!arquivo) //VERIFICA SE O ARQUIVO FOI ABERTO
+    {
+        printf("\n<<ERRO>> NAO FOI POSSIVEL ABRIR O ARQUIVO! EXECUCAO FINALIZADA!\n\n");
+        exit(1);
+    }
+    return arquivo;
 }
+
+void disponibilidade_da_porta(int sock, struct sockaddr_in cliAddr) {
+    int rc;
+    rc = bind(sock, (struct sockaddr *) &cliAddr, sizeof (cliAddr)); //TENTA CONECTAR NA PORTA
+    if (rc < 0) { //VERIFICA SE A CONEXAO OCORREU COM SUCESSO
+        printf("<<ERRO>> NAO FOI POSSIVEL VINCULAR PORTA.\n");
+        exit(1);
+    }
+}
+
+
+
+//FUNCAO PRINCIPAL
+
+int main(int numparametros, char *listaparametros[]) {
+    int sock, rc, numerosequencia;
+    struct sockaddr_in cliAddr, remoteServAddr;
+    struct hostent *host;
+    struct timeval tempo;
+    char vetor[90];
+    char *mensagem;
+    int indice, i = 0;
+    FILE *arquivo;
+    pacote envio;
+    if (numparametros < 2) { //VERIFICA NUMERO DE PARAMETROS PASSADOS (NOME DA FUNCAO E IP)
+        printf("\n<<INFO>>INFOME O SERVIDOR! EX: 'cliente_arquivo.exe 127.0.0.1'.\n");
+        exit(1);
+    }
+    arquivo = abrir_arquivo(); //ABRIR ARQUIVO DE TEXTO
+    host = conectarHost(listaparametros[1]); //OBTER ENDERE�O IP DO SERVIDOR, SEM VERIFICAR SE A ENTRADA � O ENDERE�O IP OU O NOME DNS
+    //preparar_conexao(host, &remoteServAddr); //PREPARAR A CONEXAO COM O SERVIDOR
+    sock = criaSocket(&cliAddr, &tempo); //CRIAR SOCKET E VINCULAR PORTA DO CLIENTE
+    disponibilidade_da_porta(sock, cliAddr); //CRIAR DISPONIBILIDADE DA PORTA
+    /* INICIO DO ENVIO DE DADOS AO SERVIDOR */
+    numerosequencia = 1; //INICIA VARIAVEL DE CONTROLE SEQUENCIAL DOS PACOTES
+    indice = fread(&vetor, sizeof (char), 90, arquivo); //L� A PRIMEIRA SEQUENCIA DE DADOS DO ARQUIVO E RETORNA A QUANTIDADE DE BYTES CARREGADOS PARA A VARI�VEL INDICE
+    if (indice == 0) //VERIFICA SE O ARQUIVO N�O ESTAVA VAZIO
+        strcpy(vetor, "EXIT"); //CASO O ARQUIVO ESTEJA VAZIO ADICIONA O FLAG 'EXIT' A VARIAVEL DE DADOS PARA QUE O SERVIDOR ENCERRE A TRANSFER�NCIA
+    else {
+        mensagem = (char*) calloc(indice, sizeof (char)); //CASO HAJA DADOS NO ARQUIVO GERA UM VETOR COM O TAMANHO EXATO DA QUANTIDADE DE BYTES
+    }
+    for (i = 0; i < indice; i++) { //COPIA OS DADOS PARA O VETOR DE TAMANHO ADEQUADO.
+        mensagem[i] = vetor[i];
+    }
+    while (str cmp(mensagem, "EXIT")) { //LOOP PARA ENVIO DOS PACOTES DE DADOS
+        envio = geraPacote(mensagem, numerosequencia, &indice); //GERA O PRIMEIRO PACOTE A SER ENVIADO
+        rc = -1; //VARIAV�L DE CONTROLE PARA REENVIO DE PACOTES COM ERRO DETECTADO PELO SERVIDOR
+        while (rc < 0)
+            rc = enviar_pacote(sock, &envio, remoteServAddr);
+        numerosequencia = resposta_servidor(arquivo, mensagem, &remoteServAddr, sock, numerosequencia, &indice);
+    }
+    strcpy(envio.palavra, "EXIT"); //ENVIO DE MENSAGEM DE TERMINO AO SERVIDOR
+    rc = sendto(sock, &envio, sizeof (pacote) + 1, 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr));
+    printf("\n<<INFO>>TRANSFERENCIA CONCLUIDA COM SUCESSO!\n\n"); //MENSAGEM AO USU�RIO DE TERMINO DA TRANFER�NCIA
+    fclose(arquivo);
+    exit(0);
+}
+
+
+
+
+/*int main() {
+    funcInicio();
+    
+    return 0;
+}*/
 
 /*
  Referencias
