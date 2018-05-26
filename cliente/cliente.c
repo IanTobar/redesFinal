@@ -2,14 +2,16 @@
 #include <stdlib.h>
 #include<string.h>
 #include<unistd.h>
-#include<arpa/inet.h>
 #include<sys/socket.h>
 #include <errno.h>
+#include<arpa/inet.h>
 
 //constantes
 #define SERVER "127.0.0.1"
 #define TAMBUFFER 1024  //Tamanho maximo do buffer
-#define PORTA 5000   //A porta na qual sera enviado os dados
+#define PORTA 1028   //A porta na qual sera enviado os dados
+
+
 
 typedef struct pacote {
     int numsequencial; //Número de sequência do pacote
@@ -108,7 +110,7 @@ pacote geraPacote(char *mensagem, int numerosequencia, int *indice) {
 
 
 
-//Envia Pacote ao Servidor 
+//Envia Pacote ao Servidor
 
 int enviar_pacote(int sock, pacote *pac, struct sockaddr_in remoteServAddr) {
     int resultado;
@@ -232,7 +234,7 @@ FILE * abrir_arquivo() {
     char *caminho;
     caminho = calloc(40, sizeof (char));
     printf("DIGITE O NOME DO ARQUIVO: "); //SOLICITA NOME DO ARQUIVO QUE SER� RECEBIDO
-    scanf("%s", caminho);
+    scanf("%[^\n]", caminho);
     arquivo = fopen(caminho, "rb");
     if (!arquivo) //VERIFICA SE O ARQUIVO FOI ABERTO
     {
@@ -253,6 +255,8 @@ void disponibilidade_da_porta(int sock, struct sockaddr_in cliAddr) {
 
 
 
+
+
 //FUNCAO PRINCIPAL
 
 int main(int numparametros, char *listaparametros[]) {
@@ -265,52 +269,53 @@ int main(int numparametros, char *listaparametros[]) {
     int indice, i = 0;
     FILE *arquivo;
     pacote envio;
+    // WSADATA wsaData;
+    //WSAStartup(MAKEWORD(2, 1), &wsaData); // INICIALIZA A DLL DE SOCKETS PARA O WINDOWS
     if (numparametros < 2) { //VERIFICA NUMERO DE PARAMETROS PASSADOS (NOME DA FUNCAO E IP)
         printf("\n<<INFO>>INFOME O SERVIDOR! EX: 'cliente_arquivo.exe 127.0.0.1'.\n");
         exit(1);
     }
     arquivo = abrir_arquivo(); //ABRIR ARQUIVO DE TEXTO
-    host = conectarHost(listaparametros[1]); //OBTER ENDERE�O IP DO SERVIDOR, SEM VERIFICAR SE A ENTRADA � O ENDERE�O IP OU O NOME DNS
-    //preparar_conexao(host, &remoteServAddr); //PREPARAR A CONEXAO COM O SERVIDOR
+    host = conectarHost(listaparametros[1]); //OBTER ENDEREÇO IP DO SERVIDOR, SEM VERIFICAR SE A ENTRADA É O ENDEREÇO IP OU O NOME DNS
+    //preparaConexao(host, &remoteServAddr); //PREPARAR A CONEXAO COM O SERVIDOR
     sock = criaSocket(&cliAddr, &tempo); //CRIAR SOCKET E VINCULAR PORTA DO CLIENTE
-    disponibilidade_da_porta(sock, cliAddr); //CRIAR DISPONIBILIDADE DA PORTA
+    //disponibilidade_da_porta(sock, cliAddr); //CRIAR DISPONIBILIDADE DA PORTA
     /* INICIO DO ENVIO DE DADOS AO SERVIDOR */
     numerosequencia = 1; //INICIA VARIAVEL DE CONTROLE SEQUENCIAL DOS PACOTES
-    indice = fread(&vetor, sizeof (char), 90, arquivo); //L� A PRIMEIRA SEQUENCIA DE DADOS DO ARQUIVO E RETORNA A QUANTIDADE DE BYTES CARREGADOS PARA A VARI�VEL INDICE
-    if (indice == 0) //VERIFICA SE O ARQUIVO N�O ESTAVA VAZIO
-        strcpy(vetor, "EXIT"); //CASO O ARQUIVO ESTEJA VAZIO ADICIONA O FLAG 'EXIT' A VARIAVEL DE DADOS PARA QUE O SERVIDOR ENCERRE A TRANSFER�NCIA
+    indice = fread(&vetor, sizeof (char), 90, arquivo); //LÊ A PRIMEIRA SEQUENCIA DE DADOS DO ARQUIVO E RETORNA A QUANTIDADE DE BYTES CARREGADOS PARA A VARIÁVEL INDICE
+    if (indice == 0) //VERIFICA SE O ARQUIVO NÃO ESTAVA VAZIO
+        strcpy(vetor, "EXIT"); //CASO O ARQUIVO ESTEJA VAZIO ADICIONA O FLAG 'EXIT' A VARIAVEL DE DADOS PARA QUE O SERVIDOR ENCERRE A TRANSFERÊNCIA
     else {
         mensagem = (char*) calloc(indice, sizeof (char)); //CASO HAJA DADOS NO ARQUIVO GERA UM VETOR COM O TAMANHO EXATO DA QUANTIDADE DE BYTES
     }
     for (i = 0; i < indice; i++) { //COPIA OS DADOS PARA O VETOR DE TAMANHO ADEQUADO.
         mensagem[i] = vetor[i];
     }
-    while (str cmp(mensagem, "EXIT")) { //LOOP PARA ENVIO DOS PACOTES DE DADOS
+    while (strcmp(mensagem, "EXIT")) { //LOOP PARA ENVIO DOS PACOTES DE DADOS
         envio = geraPacote(mensagem, numerosequencia, &indice); //GERA O PRIMEIRO PACOTE A SER ENVIADO
-        rc = -1; //VARIAV�L DE CONTROLE PARA REENVIO DE PACOTES COM ERRO DETECTADO PELO SERVIDOR
+        rc = -1; //VARIAVÉL DE CONTROLE PARA REENVIO DE PACOTES COM ERRO DETECTADO PELO SERVIDOR
         while (rc < 0)
             rc = enviar_pacote(sock, &envio, remoteServAddr);
         numerosequencia = resposta_servidor(arquivo, mensagem, &remoteServAddr, sock, numerosequencia, &indice);
     }
     strcpy(envio.palavra, "EXIT"); //ENVIO DE MENSAGEM DE TERMINO AO SERVIDOR
     rc = sendto(sock, &envio, sizeof (pacote) + 1, 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr));
-    printf("\n<<INFO>>TRANSFERENCIA CONCLUIDA COM SUCESSO!\n\n"); //MENSAGEM AO USU�RIO DE TERMINO DA TRANFER�NCIA
+    printf("\n<<INFO>>TRANSFERENCIA CONCLUIDA COM SUCESSO!\n\n"); //MENSAGEM AO USUÁRIO DE TERMINO DA TRANFERÊNCIA
     fclose(arquivo);
     exit(0);
 }
 
 
 
-
 /*int main() {
     funcInicio();
-    
+
     return 0;
 }*/
 
 /*
  Referencias
- 
+
  * https://docs.microsoft.com/en-us/windows-hardware/drivers/network/af-inet
  * https://www.vivaolinux.com.br/artigo/Datagramas
  * https://gist.github.com/jonhoo/7780260

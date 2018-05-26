@@ -11,8 +11,8 @@
 
 //constantes
 #define TAMBUFFER 1024
-#define PORTA 5000
-#define LOCAL_SERVER_PORT 1500
+#define PORTA 1028
+#define LOCAL_SERVER_PORT 5000
 #define MAX_MSG 100
 
 typedef struct pacote {
@@ -94,7 +94,7 @@ void funcInicio() {
     int slen = sizeof (client_sock); //tamanho da estrutura de socket
     int binder; //define o bind
 
-    char buffer[TAMBUFFER]; //mensagem 
+    char buffer[TAMBUFFER]; //mensagem
 
     /*
      cria um ponto de comunicação
@@ -130,7 +130,7 @@ void funcInicio() {
     bind(int sockfd, const struct sockaddr, *my_addr, socklen_t addrlen)
      */
     binder = bind(sock, (struct sockaddr*) &server_sock, sizeof (server_sock));
-    //verifica se deu erro no bind 
+    //verifica se deu erro no bind
     if (binder < 0) {
         printf("Erro no Bind: %s\n", strerror(errno));
         exit(1);
@@ -153,7 +153,7 @@ void funcInicio() {
         flags
         from -> endereço do cliente
         socklem_t -> tamanho do socket cliente
-         
+
         Tenta receber algum dado do cliente
          */
         if (recvfrom(sock, buffer, TAMBUFFER, 0, (struct sockaddr *) &client_sock,
@@ -166,16 +166,16 @@ void funcInicio() {
         inet_ntoa -> a partir de um valor binário (estrutura) ela retorna o endereço em formato string
         (inclusive com pontos).
         inet_ntoa(client_sock.sin_addr) -> pega o ip do cliente e converte em formato string
-        
+
         ntohs(client_sock.sin_port)) -> pega a porta do cliente e converte em formato string
-        
          */
+
         printf("Origem do cliente %s:%d\n", inet_ntoa(client_sock.sin_addr),
                 ntohs(client_sock.sin_port));
         printf("mensagem: %s\n", buffer); //imprime a mensagem
 
-        //chama função para pesquisar o nome do arquivo. Será retornado o IP do cliente que possui arquivo
-        funcPesquisaArquivo(buffer);
+         //chama função para pesquisar o nome do arquivo. Será retornado o IP do cliente que possui arquivo
+        // funcPesquisaArquivo(buffer);
 
 
         //retorna o cliente com a mensagem
@@ -190,6 +190,8 @@ void funcInicio() {
 
 }
 
+//FUNCAO PRINCIPAL
+
 int main(int argc, char *argv[]) {
 
     int sock, rc, n, cliLen;
@@ -199,8 +201,8 @@ int main(int argc, char *argv[]) {
     FILE *arquivo;
     pacote pct;
     resposta rsp;
-    WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 1), &wsaData); // INICIALIZA A DLL DE SOCKETS PARA O WINDOWS
+    //WSADATA wsaData;
+    //WSAStartup(MAKEWORD(2, 1), &wsaData); // INICIALIZA A DLL DE SOCKETS PARA O WINDOWS
     printf("DIGITE O NOME DO ARQUIVO: "); //SOLICITA NOME DO ARQUIVO QUE SERÁ RECEBIDO
     scanf("%s", msg);
     arquivo = fopen(msg, "wb"); //ABRE O ARQUIVO EM FORMATO BINARIO
@@ -302,7 +304,7 @@ int main() {
 
 /*
  Referencias
- 
+
  * https://docs.microsoft.com/en-us/windows-hardware/drivers/network/af-inet
  * https://www.vivaolinux.com.br/artigo/Datagramas
  * https://gist.github.com/jonhoo/7780260
