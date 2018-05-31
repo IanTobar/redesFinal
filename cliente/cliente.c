@@ -9,9 +9,8 @@
 //constantes
 #define SERVER "127.0.0.1"
 #define TAMBUFFER 1024  //Tamanho maximo do buffer
-#define PORTA 1028   //A porta na qual sera enviado os dados
-
-
+#define PORTA 5000   //A porta na qual sera enviado os dados
+#define REMOTE_SERVER_PORT 5000
 
 typedef struct pacote {
     int numsequencial; //Número de sequência do pacote
@@ -47,7 +46,7 @@ struct hostent * conectarHost(char *dadoshost) {
         printf("\n<<ERRO>> Host Invalido '%s' \n", dadoshost);
         exit(1);
     }
-    //    printf("\n Preparando Trasferencia dos Dados para: '%s'..\n", host->h_name); //Mensagem de Inicio ao usuário
+    printf(" Preparando Trasferencia dos Dados\n"); //Mensagem de Inicio ao usuário
     return host;
 }
 
@@ -114,9 +113,14 @@ pacote geraPacote(char *mensagem, int numerosequencia, int *indice) {
 
 int enviar_pacote(int sock, pacote *pac, struct sockaddr_in remoteServAddr) {
     int resultado;
-    resultado = sendto(sock, pac, sizeof (pacote) + 1, 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr)); //ENVIA PACOTE
+    //resultado = sendto(sock, pac, sizeof (pacote) + 1, 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr)); //ENVIA PACOTE
+    resultado = sendto(sock, pac, sizeof (pacote), 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr));
     if (resultado < 0) //VERIFICA SE O ENVIO FOI REALIZADO
         printf("\n: Falha ao Enviar Pacote %d\n", pac->numsequencial);
+
+
+
+
     return resultado;
 }
 
@@ -151,11 +155,11 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
             return numerosequencia + 1;
         } else {
             printf("Pacote %d com erro detectado pelo servidor. Reenvio em andamento\n", numerosequencia);
+
             return numerosequencia;
         }
     }
 }
-
 
 
 //função para inicializar conexão
@@ -221,6 +225,7 @@ void funcInicio() {
         //Recebe dados do servidor
         if (recvfrom(sock, buffer, TAMBUFFER, 0, (struct sockaddr *) &serv_addr,
                 (socklen_t *) & slen) == -1) {
+
             printf("Erro ao enviar pacote");
         }
         //printa os dados recebidos
@@ -233,12 +238,13 @@ FILE * abrir_arquivo() {
     FILE *arquivo;
     char *caminho;
     caminho = calloc(40, sizeof (char));
-    printf("DIGITE O NOME DO ARQUIVO: "); //SOLICITA NOME DO ARQUIVO QUE SER� RECEBIDO
+    printf("DIGITE O NOME DO ARQUIVO: "); //SOLICITA NOME DO ARQUIVO QUE SERA RECEBIDO
     scanf("%[^\n]", caminho);
     arquivo = fopen(caminho, "rb");
     if (!arquivo) //VERIFICA SE O ARQUIVO FOI ABERTO
     {
-        printf("\n<<ERRO>> NAO FOI POSSIVEL ABRIR O ARQUIVO! EXECUCAO FINALIZADA!\n\n");
+
+        printf("\nNAO FOI POSSIVEL ABRIR O ARQUIVO! EXECUCAO FINALIZADA!\n\n");
         exit(1);
     }
     return arquivo;
@@ -248,6 +254,7 @@ void disponibilidade_da_porta(int sock, struct sockaddr_in cliAddr) {
     int rc;
     rc = bind(sock, (struct sockaddr *) &cliAddr, sizeof (cliAddr)); //TENTA CONECTAR NA PORTA
     if (rc < 0) { //VERIFICA SE A CONEXAO OCORREU COM SUCESSO
+
         printf("<<ERRO>> NAO FOI POSSIVEL VINCULAR PORTA.\n");
         exit(1);
     }
@@ -278,6 +285,8 @@ int main(int numparametros, char *listaparametros[]) {
     arquivo = abrir_arquivo(); //ABRIR ARQUIVO DE TEXTO
     host = conectarHost(listaparametros[1]); //OBTER ENDEREÇO IP DO SERVIDOR, SEM VERIFICAR SE A ENTRADA É O ENDEREÇO IP OU O NOME DNS
     //preparaConexao(host, &remoteServAddr); //PREPARAR A CONEXAO COM O SERVIDOR
+    remoteServAddr.sin_family = AF_INET;
+    remoteServAddr.sin_port = htons(REMOTE_SERVER_PORT); //define a porta
     sock = criaSocket(&cliAddr, &tempo); //CRIAR SOCKET E VINCULAR PORTA DO CLIENTE
     //disponibilidade_da_porta(sock, cliAddr); //CRIAR DISPONIBILIDADE DA PORTA
     /* INICIO DO ENVIO DE DADOS AO SERVIDOR */

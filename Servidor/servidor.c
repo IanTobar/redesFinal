@@ -11,7 +11,7 @@
 
 //constantes
 #define TAMBUFFER 1024
-#define PORTA 1028
+#define PORTA 5000
 #define LOCAL_SERVER_PORT 5000
 #define MAX_MSG 100
 
@@ -27,7 +27,7 @@ typedef struct resposta {
     int num_sequencial; //NUMERO SEQUENCIAL DO PACOTE
 } resposta;
 
-//FUNÇÃO QUE CALCULA O CHEKSUN DO PACOTE DE DADOS
+//FUNÇÃO QUE CALCULA O CHEKSUM DO PACOTE DE DADOS
 
 long int checksum(char palavra[], int dimensao) {
     long int soma;
@@ -174,7 +174,7 @@ void funcInicio() {
                 ntohs(client_sock.sin_port));
         printf("mensagem: %s\n", buffer); //imprime a mensagem
 
-         //chama função para pesquisar o nome do arquivo. Será retornado o IP do cliente que possui arquivo
+        //chama função para pesquisar o nome do arquivo. Será retornado o IP do cliente que possui arquivo
         // funcPesquisaArquivo(buffer);
 
 
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
         printf("\n<<ERRO>> NAO FOI POSSIVEL ABRIR O ARQUIVO! EXECUCAO FINALIZADA!\n\n");
         return 1;
     }
-    sock = socket(AF_INET, SOCK_DGRAM, 0); //CRIAÇÃO DE SOCKET
+    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock < 0) {
         printf("\n<<ERRO>> NAO FOI POSSIVEL ABRIR O SOCKET. \n");
         exit(1);
@@ -227,7 +227,8 @@ int main(int argc, char *argv[]) {
     printf("\n<<INFO>>A ESPERA DE DADOS NA PORTA UDP %u...\n", LOCAL_SERVER_PORT);
     while (strcmp(pct.palavra, "EXIT")) //RECEBIMENTO DO ARQUIVO, FINALIZA QUANDO RECEBE UM PACOTE COM O DADO "EXIT"
     {
-        memset(&pct, 0x0, MAX_MSG); //INICIA O BUFFER
+        // memset(&pct, 0x0, MAX_MSG); //INICIA O BUFFER
+        memset(&pct, 0, TAMBUFFER);
         cliLen = sizeof (cliAddr); //RECEBE MENSAGEM
         n = recvfrom(sock, &pct, sizeof (pacote) + 1, 0, (struct sockaddr *) &cliAddr, &cliLen); //RECEBE O PACOTE E ARMAZENA UM VALOR POSITIVO EM N CASO HAJA SUCESSO
         if (!(strcmp(pct.palavra, "EXIT"))) //FINALIZA A EXECUÇÃO SE OS DADOS DO PACOTE CONTER "EXIT"
