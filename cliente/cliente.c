@@ -59,6 +59,7 @@ struct hostent * conectarHost(char *dadoshost) {
 
 int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
     int sock, opt;
+
     /*
      cria um ponto de comunicação
     socket(int domain, int type, int protocol)
@@ -89,6 +90,7 @@ void vincularPorta(struct sockaddr_in serv_addr) {
     memset((char *) &serv_addr, 0, sizeof (serv_addr)); //define um buffer (Destino, caracter, tamanho)
     serv_addr.sin_family = AF_INET; //familia de endereços
     serv_addr.sin_port = htons(PORTA); //define a porta
+
 }
 
 
@@ -194,44 +196,62 @@ void funcInicio() {
      * o na ordem de bytes da rede.
      */
 
-    /*
+    /*         * função para enviar mensagem para outro socket
+     * sendto é usado em UDP
+     * sendto(socket, mensagem_a_enviar, tamanho da mensagem, flags, endereço pra quem vai enviar,
+         tamanho socket
+     */
+    if (sendto(sock, pesquisaArquivo, strlen(pesquisaArquivo), 0,
+            (struct sockaddr *) &serv_addr, slen) == -1) {
+        //terminar("sendto()");
+    }
+
+    //Recebe dados do servidor
+    if (recvfrom(sock, buffer, TAMBUFFER, 0, (struct sockaddr *) &serv_addr,
+            (socklen_t *) & slen) == -1) {
+
+        printf("Erro ao enviar pacote");
+    }
+    //printa os dados recebidos
+    printf("%s\n", buffer);
+}
+/*
     Converte o endereço passado (inclusive com pontos) para uma estrutura de endereços (binário)
     válido. Retorna um valor maior que zero se a conversão ocorreu ou zero se houve algum erro.
+ */
+
+if (inet_aton(SERVER, &serv_addr.sin_addr) == 0)//o endereço passado foi o do servidor
+{
+    fprintf(stderr, "inet_aton() failed\n");
+    exit(1);
+}
+
+
+while (strcmp(pesquisaArquivo, "fim") != 0) {
+
+    //usuário digita o nome do arquivo que será pesquisado no servidor
+    printf("Digite o nome do arquivo que deseja baixar\n");
+    gets(pesquisaArquivo);
+
+    /*
+     * função para enviar mensagem para outro socket
+     * sendto é usado em UDP
+     * sendto(socket, mensagem_a_enviar, tamanho da mensagem, flags, endereço pra quem vai enviar,
+     tamanho socket
      */
-    if (inet_aton(SERVER, &serv_addr.sin_addr) == 0)//o endereço passado foi o do servidor
-    {
-        fprintf(stderr, "inet_aton() failed\n");
-        exit(1);
+    if (sendto(sock, pesquisaArquivo, strlen(pesquisaArquivo), 0,
+            (struct sockaddr *) &serv_addr, slen) == -1) {
+        //terminar("sendto()");
     }
 
+    //Recebe dados do servidor
+    if (recvfrom(sock, buffer, TAMBUFFER, 0, (struct sockaddr *) &serv_addr,
+            (socklen_t *) & slen) == -1) {
 
-    while (strcmp(pesquisaArquivo, "fim") != 0) {
-
-        //usuário digita o nome do arquivo que será pesquisado no servidor
-        printf("Digite o nome do arquivo que deseja baixar\n");
-        gets(pesquisaArquivo);
-
-        /*
-         * função para enviar mensagem para outro socket
-         * sendto é usado em UDP
-         * sendto(socket, mensagem_a_enviar, tamanho da mensagem, flags, endereço pra quem vai enviar,
-         tamanho socket
-         */
-        if (sendto(sock, pesquisaArquivo, strlen(pesquisaArquivo), 0,
-                (struct sockaddr *) &serv_addr, slen) == -1) {
-            //terminar("sendto()");
-        }
-
-        //Recebe dados do servidor
-        if (recvfrom(sock, buffer, TAMBUFFER, 0, (struct sockaddr *) &serv_addr,
-                (socklen_t *) & slen) == -1) {
-
-            printf("Erro ao enviar pacote");
-        }
-        //printa os dados recebidos
-        printf("%s\n", buffer);
+        printf("Erro ao enviar pacote");
     }
-
+    //printa os dados recebidos
+    printf("%s\n", buffer);
 }
 
 FILE * abrir_arquivo() {
