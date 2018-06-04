@@ -61,7 +61,7 @@ void vincularPorta(struct sockaddr_in cliAddr) {
 
 FILE * abrir_arquivo(char *arquivo[]) {
     FILE *arq;
-    arq = fopen(caminho, "rb");
+    arq = fopen(arquivo, "rb");
     if (!arquivo) //VERIFICA SE O ARQUIVO FOI ABERTO
     {
         printf("Não foi Possivel Abrir o Arquivo Execução Finalizada\n");
@@ -71,4 +71,9 @@ FILE * abrir_arquivo(char *arquivo[]) {
 }
 
 
+
+
+int main() {
+
+}
 

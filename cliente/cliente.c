@@ -19,11 +19,11 @@ typedef struct pacote {
     char palavra[90]; //vetor de dados a serem enviados
 } pacote;
 
+
 typedef struct resposta {
     int status; //SUCESSO=1, FALHA=0
     int num_sequencial; //Número de Sequência do Pacote
 } resposta;
-
 
 
 /////////////////////Funções////////////////////////
