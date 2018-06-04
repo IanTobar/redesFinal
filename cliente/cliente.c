@@ -29,6 +29,7 @@ typedef struct resposta {
 
 /////////////////////Funções////////////////////////
 
+//função para realizar checksum
 long int checksum(char palavra[], int dimensao) {
     long int soma;
     int asc, i;
@@ -40,9 +41,14 @@ long int checksum(char palavra[], int dimensao) {
     return soma; //retorna a soma (checksum)
 }
 
+//função para conectar com o host
 struct hostent * conectarHost(char *dadoshost) {
+    /*
+    A estrutura do host é usada por funções para armazenar informações sobre um determinado host, 
+    como nome do host, endereço IPv4 e assim por diante.     
+    */
     struct hostent * host;
-    host = gethostbyname(dadoshost);
+    host = gethostbyname(dadoshost);//retorna uma estrutura do tipo hostent para o nome do host fornecido.
     if (host == NULL) {
         printf("\n<<ERRO>> Host Invalido '%s' \n", dadoshost);
         exit(1);
@@ -51,16 +57,9 @@ struct hostent * conectarHost(char *dadoshost) {
     return host;
 }
 
-
-
-
-
-
 //FUNÇÃO CRIAR SOCKET
-
 int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
     int sock, opt;
-
     /*
      cria um ponto de comunicação
     socket(int domain, int type, int protocol)
@@ -68,7 +67,6 @@ int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
      type -> tipo de socket
      protocol -> procolo
      */
-
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     if (sock <= 0) {
@@ -79,6 +77,16 @@ int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
     tempo->tv_sec = 0;
     tempo->tv_usec = 400000;
     //Definir o temporizador de recepção
+    //opções do socket (socket, level, optname, *optval, optlen)
+    /*
+     * socket -> define o socket
+     * level -> O nível no qual a opção é definida
+        SOL_SOCKET -> manipular a opção a nível de socket 
+     * optname -> A opção de soquete para a qual o valor deve ser configurado
+     *  SO_RCVTIMEO -> timeout
+     * optval -> Um ponteiro para o buffer no qual o valor da opção solicitada é especificado.
+     * optlen -> O tamanho, em bytes, do buffer apontado pelo parâmetro optval.
+    */
     opt = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *) tempo, sizeof (*tempo));
     //verificar a definição do temporizador 0 = Ok, -1 = Falha
     if (opt < 0)
@@ -89,13 +97,10 @@ int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
 
 void vincularPorta(struct sockaddr_in serv_addr) {
     memset((char *) &serv_addr, 0, sizeof (serv_addr)); //define um buffer (Destino, caracter, tamanho)
-    serv_addr.sin_family = AF_INET; //familia de endereços
+    serv_addr.sin_family = AF_INET; //familia de endereços (IPV4)
     serv_addr.sin_port = htons(PORTA); //define a porta
 
 }
-
-
-
 
 //Gera Pacote para enviar
 
@@ -113,17 +118,12 @@ pacote geraPacote(char *mensagem, int numerosequencia, int *indice) {
 
 
 //Envia Pacote ao Servidor
-
 int enviar_pacote(int sock, pacote *pac, struct sockaddr_in remoteServAddr) {
     int resultado;
     //resultado = sendto(sock, pac, sizeof (pacote) + 1, 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr)); //ENVIA PACOTE
     resultado = sendto(sock, pac, sizeof (pacote), 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr));
     if (resultado < 0) //VERIFICA SE O ENVIO FOI REALIZADO
         printf("\n: Falha ao Enviar Pacote %d\n", pac->numsequencial);
-
-
-
-
     return resultado;
 }
 
@@ -133,6 +133,21 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
     char vetor[90];
     memset(&rsp, 0x0, sizeof (rsp)); //Inicia Buffer
     aux = sizeof (*remoteServAddr); //Recebe resposta
+    
+    /*
+    recvfrom -> função recvfrom é utilizada para receber (ler) uma mensagem de um socket.
+    * deve ser usado com a função sento (UDP)
+
+    recvfrom(int s, void * buffer, size_t len, int flags, struct sockaddr * from, socklem_t * fromlen)
+    s -> socket
+    buffer -> mensagem lida
+    len -> tamanho da mensagem lida (Buffer)
+    flags
+    from -> endereço do cliente
+    socklem_t -> tamanho do socket cliente
+
+    Tenta receber algum dado do cliente
+    */    
     n = recvfrom(sock, &rsp, sizeof (resposta), 0, (struct sockaddr *) remoteServAddr, &aux);
     if (n < 0) //Verifica Resposta
         printf("Resposta do Servidor nao Recebida!\n");
@@ -149,7 +164,7 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
                 mensagem[2] = 'I';
                 mensagem[3] = 'T';
             } else {
-                free(mensagem);
+                free(mensagem);//desaloca memória
                 mensagem = (char*) calloc(*indice, sizeof (char)); //SE 'INDICE'>0 cria vetor com tamanho adequado de bytes
                 for (i = 0; i < (*indice); i++) {
                     mensagem[i] = vetor[i];
@@ -178,8 +193,15 @@ void funcInicio() {
      cria um ponto de comunicação
     socket(int domain, int type, int protocol)
      int domain -> dominino da comunicação (tipo da comunicação)
+     *  IPV4
      type -> tipo de socket
+        Fornece datagramas, que são mensagens sem conexão de um comprimento máximo fixo. Esse tipo de soquete geralmente é 
+        usado para mensagens curtas, como um servidor de nomes ou servidor de horário, porque a ordem e a confiabilidade da 
+        entrega da mensagem não são garantidas.
+        No domínio UNIX, o tipo de soquete SOCK_DGRAM é semelhante a uma fila de mensagens. No domínio da Internet, o tipo de 
+        soquete SOCK_DGRAM é implementado no protocolo UDP / IP (User Datagram Protocol / Internet Protocol).
      protocol -> procolo
+        IPPROTO_UDP -> UDP
      */
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     //verifica se o socket foi aberto corretamente
@@ -208,6 +230,20 @@ void funcInicio() {
     }
 
     //Recebe dados do servidor
+    /*
+        recvfrom -> função recvfrom é utilizada para receber (ler) uma mensagem de um socket.
+         * deve ser usado com a função sento (UDP)
+
+        recvfrom(int s, void * buffer, size_t len, int flags, struct sockaddr * from, socklem_t * fromlen)
+        s -> socket
+        buffer -> mensagem lida
+        len -> tamanho da mensagem lida (Buffer)
+        flags
+        from -> endereço do cliente
+        socklem_t -> tamanho do socket cliente
+
+        Tenta receber algum dado do cliente
+    */    
     if (recvfrom(sock, buffer, TAMBUFFER, 0, (struct sockaddr *) &serv_addr,
             (socklen_t *) & slen) == -1) {
 
@@ -220,7 +256,6 @@ void funcInicio() {
     Converte o endereço passado (inclusive com pontos) para uma estrutura de endereços (binário)
     válido. Retorna um valor maior que zero se a conversão ocorreu ou zero se houve algum erro.
  */
-
 if (inet_aton(SERVER, &serv_addr.sin_addr) == 0)//o endereço passado foi o do servidor
 {
     fprintf(stderr, "inet_aton() failed\n");
@@ -273,6 +308,15 @@ FILE * abrir_arquivo() {
 
 void disponibilidade_da_porta(int sock, struct sockaddr_in cliAddr) {
     int rc;
+    /*
+    Faz o bind do socket com a porta.
+    bind -> associa o socket criado a porta local do sistema operacional. Será desta associação
+    (porta) que o programa receberá dados (bytes) de outros programas
+    bind(int sockfd, const struct sockaddr, *my_addr, socklen_t addrlen)
+     *sockfd -> descritor de arquivo que faz referência a um soquete.
+     *sockaddr ->  corresponde ao endereço que será atribuído ao sockfd. 
+     *socklen_t addrlen -> especifica o tamanho, em bytes, da estrutura de endereço apontada por sockaddr.
+     */     
     rc = bind(sock, (struct sockaddr *) &cliAddr, sizeof (cliAddr)); //TENTA CONECTAR NA PORTA
     if (rc < 0) { //VERIFICA SE A CONEXAO OCORREU COM SUCESSO
 
@@ -351,4 +395,6 @@ int main(int numparametros, char *listaparametros[]) {
  * https://gist.github.com/jonhoo/7780260
  * https://www.binarytides.com/raw-udp-sockets-c-linux/
  * http://penta2.ufrgs.br/Esmilda/fmtoudp.html
+ * https://msdn.microsoft.com/en-us/library/windows/desktop/ms738552(v=vs.85).aspx
+ * https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.progcomc/socket-types.htm
  */
