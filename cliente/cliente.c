@@ -1,17 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include<string.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include <errno.h>
-#include<arpa/inet.h>
+#include<unistd.h>//define diversas constantes e tipos simbólicos e declara funções diversas.
+#include<sys/socket.h>//cabeçalho dos sockets principais
+#include <errno.h>//números de erro do sistema
+#include<arpa/inet.h>//definições para operações da internet.  disponibiliza o tipo in_port_t e o tipo in_addr_t. disponibiliza a estrutura in_addr
 
 //constantes
 #define SERVER "127.0.0.1"
 #define TAMBUFFER 1024  //Tamanho maximo do buffer
 #define PORTA 5000   //A porta -na qual sera enviado os dados
-#define REMOTE_SERVER_PORT 5000
+#define REMOTE_SERVER_PORT 5000 
 
+//estrutura do pacote
 typedef struct pacote {
     int numsequencial; //Número de sequência do pacote
     long int check_sum; //Soma de Verificação do Pacote
