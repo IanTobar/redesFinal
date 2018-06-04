@@ -9,7 +9,7 @@
 //constantes
 #define SERVER "127.0.0.1"
 #define TAMBUFFER 1024  //Tamanho maximo do buffer
-#define PORTA 5000   //A porta na qual sera enviado os dados
+#define PORTA 5000   //A porta -na qual sera enviado os dados
 #define REMOTE_SERVER_PORT 5000
 
 typedef struct pacote {

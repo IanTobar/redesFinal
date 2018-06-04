@@ -7,8 +7,21 @@
 #include<arpa/inet.h>
 
 typedef struct pacote {
-    int num;
-    long int checksum;
-    char dados[90];
+    int numSeq; //número de sequência do pacote
+    long int checksum; //Numero de verificação do pacote
+    int tamDados; // tamanho da palavra
+    char dados[90]; //vetor de dados
 } pacote;
+
+typedef struct ak {
+    int status; // status 1 = ACK 2 = NACK
+    int numSeq; ////número de sequência do pacote
+};
+
+long int checksum() {
+    long int soma;
+    int asc, i;
+    soma = 0;
+
+}
 
