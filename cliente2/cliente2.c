@@ -18,10 +18,14 @@ typedef struct ak {
     int numSeq; ////número de sequência do pacote
 };
 
-long int checksum() {
+long int checksum(char dados[], int tamdados) {
     long int soma;
     int asc, i;
     soma = 0;
-
+    for (i = 0; i < tamdados; i++) { //percorre vetor de dados para cálcular o checksum
+        asc = (int) dados[i]; //transforma palavra em valor inteiro seguindo a tabela ascii
+        soma += asc; //adiciona a soma
+    }
+    return soma; //retorna a soma (checksum)
 }
 
