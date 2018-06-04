@@ -1,13 +1,13 @@
 #include <stdio.h>
-#include <netdb.h>
-#include <errno.h>
+#include <netdb.h>// definições para operações de banco de dados de rede. Pode disponibilizar o tipo in_port_t e o tipo in_addr_t
+#include <errno.h>//números de erro do sistema
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <unistd.h>//define diversas constantes e tipos simbólicos e declara funções diversas.
+#include <arpa/inet.h>//definições para operações da internet.  disponibiliza o tipo in_port_t e o tipo in_addr_t. disponibiliza a estrutura in_addr
+#include <sys/types.h>//tipos de dados
+#include <sys/socket.h>//cabeçalho dos sockets principais
+#include <netinet/in.h>//Família de protocolos da Internet
 
 //constantes
 #define TAMBUFFER 1024
@@ -28,7 +28,6 @@ typedef struct resposta {
 } resposta;
 
 //FUNÇÃO QUE CALCULA O CHEKSUM DO PACOTE DE DADOS
-
 long int checksum(char palavra[], int dimensao) {
     long int soma;
     int asc, i;
@@ -98,10 +97,14 @@ void funcInicio() {
 
     /*
      cria um ponto de comunicação
-    socket(int domain, int type, int protocol)
+     socket(int domain, int type, int protocol)
      int domain -> dominino da comunicação (tipo da comunicação)
+        *AF_INET -> familia de endereço IPV4
      type -> tipo de socket
+        *SOCK_DGRAM é um protocolo baseado em datagrama. Você envia um datagrama e recebe uma resposta e, em seguida, a 
+     conexão é encerrada
      protocol -> procolo
+        * IPPROTO_UDP -> indica que o protocolo usado é o UDP
      */
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -111,8 +114,14 @@ void funcInicio() {
         exit(1);
     }
 
+    /*
+    void * memset ( void * ptr, int value, size_t num );
+    Preencha o bloco de memória
+    Define os primeiros num bytes do bloco de memória apontado por ptr para o valor especificado 
+    (interpretado como um caracter não assinado)
+    */
     memset((char *) &server_sock, 0, sizeof (server_sock)); //define um buffer (Destino, caracter, tamanho)
-    server_sock.sin_family = AF_INET; //familia de endereços
+    server_sock.sin_family = AF_INET; //familia de endereços IPV4
     server_sock.sin_port = htons(PORTA); //define a porta
 
 
@@ -128,9 +137,17 @@ void funcInicio() {
     bind -> associa o socket criado a porta local do sistema operacional. Será desta associação
     (porta) que o programa receberá dados (bytes) de outros programas
     bind(int sockfd, const struct sockaddr, *my_addr, socklen_t addrlen)
+     *sockfd -> descritor de arquivo que faz referência a um soquete.
+     *sockaddr ->  corresponde ao endereço que será atribuído ao sockfd. 
+     *socklen_t addrlen -> especifica o tamanho, em bytes, da estrutura de endereço apontada por sockaddr.
      */
     binder = bind(sock, (struct sockaddr*) &server_sock, sizeof (server_sock));
     //verifica se deu erro no bind
+    /*
+    Se a chamada bind( ) é executada com sucesso, o valor zero é retornado. 
+    Caso a chamada não seja bem sucedida, o valor -1 é retornado e o código do erro 
+    é colocado na variável externa errno      
+    */
     if (binder < 0) {
         printf("Erro no Bind: %s\n", strerror(errno));
         exit(1);
@@ -140,6 +157,13 @@ void funcInicio() {
     while (strcmp(buffer, "fim") != 0) {
         printf("Esperando por dados\n");
         fflush(stdout);
+        
+        /*
+        void * memset ( void * ptr, int value, size_t num );
+        Preencha o bloco de memória
+        Define os primeiros num bytes do bloco de memória apontado por ptr para o valor especificado 
+        (interpretado como um caracter não assinado)
+        */        
         memset(buffer, '\0', TAMBUFFER);
 
         /*
@@ -201,8 +225,6 @@ int main(int argc, char *argv[]) {
     FILE *arquivo;
     pacote pct;
     resposta rsp;
-    //WSADATA wsaData;
-    //WSAStartup(MAKEWORD(2, 1), &wsaData); // INICIALIZA A DLL DE SOCKETS PARA O WINDOWS
     printf("DIGITE O NOME DO ARQUIVO: "); //SOLICITA NOME DO ARQUIVO QUE SERÁ RECEBIDO
     scanf("%s", msg);
     arquivo = fopen(msg, "wb"); //ABRE O ARQUIVO EM FORMATO BINARIO
@@ -211,14 +233,57 @@ int main(int argc, char *argv[]) {
         printf("\n<<ERRO>> NAO FOI POSSIVEL ABRIR O ARQUIVO! EXECUCAO FINALIZADA!\n\n");
         return 1;
     }
+    
+    /*
+     cria um ponto de comunicação
+     socket(int domain, int type, int protocol)
+     int domain -> dominino da comunicação (tipo da comunicação)
+        *AF_INET -> familia de endereço IPV4
+     type -> tipo de socket
+        *SOCK_DGRAM é um protocolo baseado em datagrama. Você envia um datagrama e recebe uma resposta e, em seguida, a 
+     conexão é encerrada
+     protocol -> procolo
+        * IPPROTO_UDP -> indica que o protocolo usado é o UDP
+     */    
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock < 0) {
         printf("\n<<ERRO>> NAO FOI POSSIVEL ABRIR O SOCKET. \n");
         exit(1);
     }
+    /*
+    A variável serv_addr é uma estrutura do tipo struct sockaddr_in. 
+    Essa estrutura possui quatro campos. 
+    O primeiro campo é short sin_family, que contém um código para a família de endereços. 
+    Deve sempre ser definido para a constante simbólica AF_INET. 
+    *AF_INET -> familia de endereço IPV4
+    */
     servAddr.sin_family = AF_INET; //LIGANDO PORTA LOCAL DO SERVIDOR
+    
+    /*
+    O terceiro campo de sockaddr_in é uma estrutura do tipo struct in_addr que contém apenas um único 
+    campo unsigned long s_addr. Este campo contém o endereço IP do host. Para o código do servidor, 
+    este será sempre o endereço IP da máquina em que o servidor está sendo executado, e há uma constante 
+    simbólica INADDR_ANY que obtém esse endereço.
+    */
     servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    
+    /*
+    O segundo campo de serv_addr é sin_port curto não assinado, que contém o número da porta. 
+    No entanto, em vez de simplesmente copiar o número da porta para esse campo, 
+    é necessário convertê-lo em ordem de bytes de rede usando a função htons () que converte um número 
+    de porta em ordem de bytes host em um número de porta em ordem de bytes de rede.     
+    */
     servAddr.sin_port = htons(LOCAL_SERVER_PORT);
+    
+    /*
+    Faz o bind do socket com a porta.
+    bind -> associa o socket criado a porta local do sistema operacional. Será desta associação
+    (porta) que o programa receberá dados (bytes) de outros programas
+    bind(int sockfd, const struct sockaddr, *my_addr, socklen_t addrlen)
+     *sockfd -> descritor de arquivo que faz referência a um soquete.
+     *sockaddr ->  corresponde ao endereço que será atribuído ao sockfd. 
+     *socklen_t addrlen -> especifica o tamanho, em bytes, da estrutura de endereço apontada por sockaddr.
+     */    
     rc = bind(sock, (struct sockaddr *) &servAddr, sizeof (servAddr));
     if (rc < 0) {
         printf("<<ERRO>> NAO FOI POSSIVEL UTILIZAR A PORTA DE NUMERO %d!\n", LOCAL_SERVER_PORT);
@@ -230,7 +295,8 @@ int main(int argc, char *argv[]) {
         // memset(&pct, 0x0, MAX_MSG); //INICIA O BUFFER
         memset(&pct, 0, TAMBUFFER);
         cliLen = sizeof (cliAddr); //RECEBE MENSAGEM
-        n = recvfrom(sock, &pct, sizeof (pacote) + 1, 0, (struct sockaddr *) &cliAddr, &cliLen); //RECEBE O PACOTE E ARMAZENA UM VALOR POSITIVO EM N CASO HAJA SUCESSO
+        //RECEBE O PACOTE E ARMAZENA UM VALOR POSITIVO EM N CASO HAJA SUCESSO        
+        n = recvfrom(sock, &pct, sizeof (pacote) + 1, 0, (struct sockaddr *) &cliAddr, &cliLen); 
         if (!(strcmp(pct.palavra, "EXIT"))) //FINALIZA A EXECUÇÃO SE OS DADOS DO PACOTE CONTER "EXIT"
             break;
         if (n < 0) //VERIFICA SE "N" ESTÁ NEGATIVO PARA SOLICITAR REENVIO DO PACOTE
@@ -257,6 +323,7 @@ int main(int argc, char *argv[]) {
                 rsp.status = 1; // GERAR RESPOSTA DO SERVIDOR
                 rc = -1; //ENVIAR RESPOSTA AO SERVIDOR
                 while (rc < 0) {
+                    //A função sendto envia dados para um destino específico
                     rc = sendto(sock, &rsp, sizeof (resposta), 0, (struct sockaddr *) &cliAddr, sizeof (cliAddr));
                     if (rc < 0) //VERIFICAR SE ENVIO DA RESPOSTA FOI REALIZADO COM SUCESSO.
                     {
