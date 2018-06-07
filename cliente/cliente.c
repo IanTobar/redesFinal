@@ -119,10 +119,6 @@ int enviar_pacote(int sock, pacote *pac, struct sockaddr_in remoteServAddr) {
     resultado = sendto(sock, pac, sizeof (pacote), 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr));
     if (resultado < 0) //VERIFICA SE O ENVIO FOI REALIZADO
         printf("\n: Falha ao Enviar Pacote %d\n", pac->numsequencial);
-
-
-
-
     return resultado;
 }
 
@@ -296,6 +292,7 @@ int main(int numparametros, char *listaparametros[]) {
     int indice, i = 0;
     FILE *arquivo;
     pacote envio;
+    
     // WSADATA wsaData;
     //WSAStartup(MAKEWORD(2, 1), &wsaData); // INICIALIZA A DLL DE SOCKETS PARA O WINDOWS
     if (numparametros < 2) { //VERIFICA NUMERO DE PARAMETROS PASSADOS (NOME DA FUNCAO E IP)
