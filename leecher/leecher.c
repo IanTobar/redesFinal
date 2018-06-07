@@ -85,32 +85,59 @@ pacote geraPacote(char *mensagem, int numerosequencia, int *indice) {
 }
 
 int main(int argc, char** argv) {
-    int sock, cliTam, status, rc, numSeq = 0, sockEnv;
-    char pesquisaArquivo[51], pesquisaIP[31];
-    struct sockaddr_in cliAddr;
+    int sock, cliTam, status, rc, numSeq = 0;
+    char pesquisaArquivo[51], ipArq[16];
+    struct sockaddr_in cliAddr, servAddr;
     struct hostent * host;
     long int check;
     FILE *arquivo;
     pacote pct, pct2;
     ck resp;
 
+    //CRIA SOCKET PARA RECEBER DADOS
     sock = criaSocket(); //Cria Socket que  será utilizado pelo cliente para receber o arquivo
     bindSocket(cliAddr, sock); //Faz o bind do socket a uma porta local para recebimento de dados
-    sockEnv = criaSocket();
+
+    //INTERAGE COM O USUÁRIO PARA OBTER NOME DO ARQUIVO QUE SE DESEJA RECEBER
+    printf("Digite o nome do arquivo que deseja baixar\n"); //solicita ao usuário nome do arquivo que se deseja baixar
+    gets(pesquisaArquivo); //armazena esse nome na variável pesquisa arquivo
+
+    //CONECTA AO SERVIDOR PARA RECEBER IP DA MAQUINA QUE CONTÉM O ARQUIVO DESEJADO
     host = gethostbyname(argv[1]);
     if (host == NULL) {
         printf("impossivel conectar ao host '%s', Finalizando Programa... \n", argv[1]);
         exit(1);
     }
-    printf("Digite o nome do arquivo que deseja baixar\n"); //solicita ao usuário nome do arquivo que se deseja baixar
-    gets(pesquisaArquivo); //armazena esse nome na variável pesquisa arquivo
+    servAddr->sin_family = host->h_addrtype;
+    memcpy((char *) &servAddr->sin_addr.s_addr/*PARA QUEM VAO OS DADOS*/,
+            host->h_addr_list[0] /*DE ONDE VAO OS DADOS*/, host->h_length /*numero de bytes*/); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
+    servAddr->sin_port = htons(porta);
 
     // COMUNICA COM SERVIDOR PARA PESQUISAR O ARQUIVO E SOLICITAR O IP DO SEEDER
     pct2 = geraPacote(pesquisaArquivo, numSeq, strlen(pesquisaArquivo)); //gera pacote que será enviado ao servidor
     numSeq++;
-    sendto(sock, pct2, sizeof (pacote), 0, (struct sockaddr *),);
+    sendto(sock, pct2, sizeof (pacote), 0, (struct sockaddr *), &servAddr, sizeof (servAddr));
 
+    memset(&pct, 0x0, buffer); //inicia o Buffer
+    status = recvfrom(sock, &pct, sizeof (pacote), 0, (struct sockaddr *) &cliAddr, &cliTam); //recebe pacote e armazena valor do status,positivo = sucesso 
 
+    check = checksum(pct.dados, pct.tamDados); //Calcula Checksum do pacote recebido
+
+    if (check != pct.checksum) {
+
+    }
+    strcpy(ipArq, pct.dados); //copia os dados do pacote de resposta do servidor para a variável ipArq 
+
+    //CONECTA AO CLIENTE QUE POSSUI O ARQUIVO PARA SOLICITAR O ENVIO DO ARQUIVO DESEJADO
+    host = gethostbyname(ipArq);
+    if (host == NULL) {
+        printf("impossivel conectar ao host '%s', Finalizando Programa... \n", ipArq);
+        exit(1);
+    }
+    servAddr->sin_family = host->h_addrtype;
+    memcpy((char *) &servAddr->sin_addr.s_addr/*PARA QUEM VAO OS DADOS*/,
+            host->h_addr_list[0] /*DE ONDE VAO OS DADOS*/, host->h_length /*numero de bytes*/); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
+    servAddr->sin_port = htons(porta);
 
 
     //CRIAÇÃO DO ARQUIVO FINAL ONDE OS DADOS RECEBIDOS SERÃO PERSISTIDOS
@@ -127,8 +154,8 @@ int main(int argc, char** argv) {
     while (strcmp(pct.dados, "FIM")) //loop para receber o arquivo, finaliza ao receber Palavra FIM
     {
         memset(&pct, 0x0, buffer); //inicia o Buffer
-        cliTam = sizeof (cliAddr); //RECEBE MENSAGEM
-        status = recvfrom(sock, &pct, sizeof (pacote) + 1, 0, (struct sockaddr *) &cliAddr, &cliTam); //recebe pacote e armazena valor do status,positivo = sucesso 
+        cliTam = sizeof (cliAddr); //recebe mensagem
+        status = recvfrom(sock, &pct, sizeof (pacote), 0, (struct sockaddr *) &cliAddr, &cliTam); //recebe pacote e armazena valor do status,positivo = sucesso 
         if (!(strcmp(pct.dados, "FIM"))) //finaliza execução ao receber FIM nos dados do pacote 
 
             break;

@@ -13,13 +13,13 @@
 #define REMOTE_SERVER_PORT 5000 
 
 //estrutura do pacote
+
 typedef struct pacote {
     int numsequencial; //Número de sequência do pacote
     long int check_sum; //Soma de Verificação do Pacote
     int dimensao; //DIMENSAO QUE CONTEM A VARIÁVEL DE DADOS
     char palavra[90]; //vetor de dados a serem enviados
 } pacote;
-
 
 typedef struct resposta {
     int status; //SUCESSO=1, FALHA=0
@@ -30,6 +30,7 @@ typedef struct resposta {
 /////////////////////Funções////////////////////////
 
 //função para realizar checksum
+
 long int checksum(char palavra[], int dimensao) {
     long int soma;
     int asc, i;
@@ -42,13 +43,14 @@ long int checksum(char palavra[], int dimensao) {
 }
 
 //função para conectar com o host
+
 struct hostent * conectarHost(char *dadoshost) {
     /*
     A estrutura do host é usada por funções para armazenar informações sobre um determinado host, 
     como nome do host, endereço IPv4 e assim por diante.     
-    */
+     */
     struct hostent * host;
-    host = gethostbyname(dadoshost);//retorna uma estrutura do tipo hostent para o nome do host fornecido.
+    host = gethostbyname(dadoshost); //retorna uma estrutura do tipo hostent para o nome do host fornecido.
     if (host == NULL) {
         printf("\n<<ERRO>> Host Invalido '%s' \n", dadoshost);
         exit(1);
@@ -58,6 +60,7 @@ struct hostent * conectarHost(char *dadoshost) {
 }
 
 //FUNÇÃO CRIAR SOCKET
+
 int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
     int sock, opt;
     /*
@@ -86,7 +89,7 @@ int criaSocket(struct sockaddr_in *cliAddr, struct timeval *tempo) {
      *  SO_RCVTIMEO -> timeout
      * optval -> Um ponteiro para o buffer no qual o valor da opção solicitada é especificado.
      * optlen -> O tamanho, em bytes, do buffer apontado pelo parâmetro optval.
-    */
+     */
     opt = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *) tempo, sizeof (*tempo));
     //verificar a definição do temporizador 0 = Ok, -1 = Falha
     if (opt < 0)
@@ -118,6 +121,7 @@ pacote geraPacote(char *mensagem, int numerosequencia, int *indice) {
 
 
 //Envia Pacote ao Servidor
+
 int enviar_pacote(int sock, pacote *pac, struct sockaddr_in remoteServAddr) {
     int resultado;
     //resultado = sendto(sock, pac, sizeof (pacote) + 1, 0, (struct sockaddr *) &remoteServAddr, sizeof (remoteServAddr)); //ENVIA PACOTE
@@ -133,10 +137,10 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
     char vetor[90];
     memset(&rsp, 0x0, sizeof (rsp)); //Inicia Buffer
     aux = sizeof (*remoteServAddr); //Recebe resposta
-    
+
     /*
     recvfrom -> função recvfrom é utilizada para receber (ler) uma mensagem de um socket.
-    * deve ser usado com a função sento (UDP)
+     * deve ser usado com a função sento (UDP)
 
     recvfrom(int s, void * buffer, size_t len, int flags, struct sockaddr * from, socklem_t * fromlen)
     s -> socket
@@ -147,7 +151,7 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
     socklem_t -> tamanho do socket cliente
 
     Tenta receber algum dado do cliente
-    */    
+     */
     n = recvfrom(sock, &rsp, sizeof (resposta), 0, (struct sockaddr *) remoteServAddr, &aux);
     if (n < 0) //Verifica Resposta
         printf("Resposta do Servidor nao Recebida!\n");
@@ -164,7 +168,7 @@ int resposta_servidor(FILE * arquivo, char *mensagem, struct sockaddr_in *remote
                 mensagem[2] = 'I';
                 mensagem[3] = 'T';
             } else {
-                free(mensagem);//desaloca memória
+                free(mensagem); //desaloca memória
                 mensagem = (char*) calloc(*indice, sizeof (char)); //SE 'INDICE'>0 cria vetor com tamanho adequado de bytes
                 for (i = 0; i < (*indice); i++) {
                     mensagem[i] = vetor[i];
@@ -232,7 +236,7 @@ void funcInicio() {
     //Recebe dados do servidor
     /*
         recvfrom -> função recvfrom é utilizada para receber (ler) uma mensagem de um socket.
-         * deve ser usado com a função sento (UDP)
+     * deve ser usado com a função sento (UDP)
 
         recvfrom(int s, void * buffer, size_t len, int flags, struct sockaddr * from, socklem_t * fromlen)
         s -> socket
@@ -243,7 +247,7 @@ void funcInicio() {
         socklem_t -> tamanho do socket cliente
 
         Tenta receber algum dado do cliente
-    */    
+     */
     if (recvfrom(sock, buffer, TAMBUFFER, 0, (struct sockaddr *) &serv_addr,
             (socklen_t *) & slen) == -1) {
 
@@ -252,6 +256,7 @@ void funcInicio() {
     //printa os dados recebidos
     printf("%s\n", buffer);
 }
+
 /*
     Converte o endereço passado (inclusive com pontos) para uma estrutura de endereços (binário)
     válido. Retorna um valor maior que zero se a conversão ocorreu ou zero se houve algum erro.
@@ -316,7 +321,7 @@ void disponibilidade_da_porta(int sock, struct sockaddr_in cliAddr) {
      *sockfd -> descritor de arquivo que faz referência a um soquete.
      *sockaddr ->  corresponde ao endereço que será atribuído ao sockfd. 
      *socklen_t addrlen -> especifica o tamanho, em bytes, da estrutura de endereço apontada por sockaddr.
-     */     
+     */
     rc = bind(sock, (struct sockaddr *) &cliAddr, sizeof (cliAddr)); //TENTA CONECTAR NA PORTA
     if (rc < 0) { //VERIFICA SE A CONEXAO OCORREU COM SUCESSO
 
@@ -341,7 +346,7 @@ int main(int numparametros, char *listaparametros[]) {
     int indice, i = 0;
     FILE *arquivo;
     pacote envio;
-    
+
     // WSADATA wsaData;
     //WSAStartup(MAKEWORD(2, 1), &wsaData); // INICIALIZA A DLL DE SOCKETS PARA O WINDOWS
     if (numparametros < 2) { //VERIFICA NUMERO DE PARAMETROS PASSADOS (NOME DA FUNCAO E IP)
