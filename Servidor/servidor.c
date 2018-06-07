@@ -378,4 +378,8 @@ int main() {
  * https://gist.github.com/jonhoo/7780260
  * https://www.binarytides.com/raw-udp-sockets-c-linux/
  * http://penta2.ufrgs.br/Esmilda/fmtoudp.html
+ * http://pubs.opengroup.org/onlinepubs/7908799/xsh/unistd.h.html
+ * http://www.uniriotec.br/~morganna/guia/libc/cs_bind.html
+ * https://www.ibm.com/support/knowledgecenter/en/ssw_i5_54/apis/socket.htm
  */
+
