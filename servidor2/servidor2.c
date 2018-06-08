@@ -70,14 +70,14 @@ void bindSocket(struct sockaddr_in *servAddr, int sock) {
     }
 }
 
-pacote geraPacote(char *mensagem, int numerosequencia, int *indice) {
+pacote geraPacote(char *mensagem, int numerosequencia, int indice) {
     pacote pac;
-    int i = 0;
+    //int i = 0;
     // for (i = 0; i < (*indice); i++) //adiciona os dados ao pacote
     //pac.dados[i] = mensagem[i];
     strcpy(pac.dados, mensagem);
-    pac.checksum = checksum(pac.dados, *indice); //Chama checksum
-    pac.tamDados = *indice; //Define Dimensão (Número de Bytes)
+    pac.checksum = checksum(pac.dados, indice); //Chama checksum
+    pac.tamDados = indice; //Define Dimensão (Número de Bytes)
     pac.numSeq = numerosequencia; //Define Número de Sequência do Pacote
     return pac;
 }
@@ -86,7 +86,6 @@ char* funcPesquisaArquivo(char* pesquisaArquivo) {
 
     char resultadoArquivo[51]; //resultado do arquivo pesquisado no servidor 
     char* resultadoIp = (char*) calloc(16, sizeof (char)); //armazena o resultado do ip achado no arquivo de pesquisa 
-
     FILE *ptarq; //ponteiro para manipular arquivo 
 
     //abre arquivo em modo de leitura 
@@ -118,7 +117,7 @@ char* funcPesquisaArquivo(char* pesquisaArquivo) {
         return resultadoIp;
 
     }
-
+    return 0;
 }
 
 int main() {
@@ -128,10 +127,11 @@ int main() {
     struct timeval tempo;
     char resultadoIP[16];
     //CRIA SOCKET NO SERVIDOR E FAZ SEU BIND PARA RECEBER DADOS ATRAVÉS DELE
+    printf("1");
     sock = criaSocket(&servAddr, &tempo);
     bindSocket(&servAddr, sock);
     //RECEBE SOLICITAÇÃO DO CLIENTE
-    recvfrom(sock, &pctRec, sizeof (pctRec), 0, (struct sockaddr *) &servAddr, sizeof (servAddr));
+     recvfrom(sock, &pctRec, sizeof (pctRec), 0, (struct sockaddr *) &servAddr, sizeof (servAddr));
     //PRINTA INFORMAÇÕES PARA TESTE
     printf("Origem do cliente %s\n", inet_ntoa(cliAddr.sin_addr));
     printf("mensagem: %s\n", pctRec.dados); //imprime a mensagem
