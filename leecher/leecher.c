@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
     pacote pct, pct2;
     ck resp;
     cliTam = sizeof (cliAddr);
-    printf("1-Baixar Arquivo\n2-Seeder");
+    printf("1-Baixar Arquivo\n2-Seeder\n");
     scanf("%d", op);
     switch (op) {
         case 1:
