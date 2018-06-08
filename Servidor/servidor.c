@@ -47,6 +47,7 @@ char* funcPesquisaArquivo(char* pesquisaArquivo) {
     char resultadoArquivo[51]; //resultado do arquivo pesquisado no servidor
     char* resultadoIp = (char*) calloc(16, sizeof (char)); //armazena o resultado do ip achado no arquivo de pesquisa
 
+            
     FILE *ptarq; //ponteiro para manipular arquivo
 
     //abre arquivo em modo de leitura
@@ -199,7 +200,7 @@ void funcInicio() {
         printf("mensagem: %s\n", buffer); //imprime a mensagem
 
         //chama função para pesquisar o nome do arquivo. Será retornado o IP do cliente que possui arquivo
-        // funcPesquisaArquivo(buffer);
+        funcPesquisaArquivo(buffer);
 
 
         //retorna o cliente com a mensagem

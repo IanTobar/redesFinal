@@ -48,26 +48,9 @@ int criaSocket(struct sockaddr_in *cliAddr, struct timeval *time_wait) {
     if (opt < 0) {
         printf("Erro ao definir temporizador de Resposta\n");
     }
-    vincularPorta();
+
 
     return sock;
-}
-
-void vincularPorta(struct sockaddr_in cliAddr) {
-    memset((char *) &cliAddr, 0, sizeof (cliAddr));
-    cliAddr.sin_family = AF_INET;
-    cliAddr.sin_port = htons(PORTA);
-}
-
-FILE * abrir_arquivo(char *arquivo) {
-    FILE *arq;
-    arq = fopen(arquivo, "rb");
-    if (!arquivo) //VERIFICA SE O ARQUIVO FOI ABERTO
-    {
-        printf("Não foi Possivel Abrir o Arquivo Programa Finalizado\n");
-        exit(1);
-    }
-    return arq;
 }
 
 pacote geraPacote(char mensagem[], int numerosequencia, int *indice) {
@@ -79,12 +62,6 @@ pacote geraPacote(char mensagem[], int numerosequencia, int *indice) {
     pac.tamDados = *indice; //Define Dimensão (Número de Bytes)
     pac.numSeq = numerosequencia; //Define Número de Sequência do Pacote
     return pac;
-}
-
-void vincularPorta(struct sockaddr_in cliAddr) {
-    memset((char *) &cliAddr, 0, sizeof (cliAddr)); //define um buffer (Destino, caracter, tamanho)
-    cliAddr.sin_family = AF_INET;
-    cliAddr.sin_port = htons(PORTA);
 }
 
 FILE * abrir_arquivo(char *arquivo) {
