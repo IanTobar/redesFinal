@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
     int sock, cliTam, status, rc, numSeq = 0, op, tamanho, i;
     char pesquisaArquivo[51], ipArq[16], vet[90], *dados;
     struct sockaddr_in cliAddr, servAddr;
-    struct hostent * host;
+    struct hostent *host;
     long int check;
     struct timeval tempo;
     FILE *arquivo;
@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
                 exit(1);
             }
             servAddr.sin_family = host->h_addrtype;
-            memcpy((char *) &servAddr.sin_addr.s_addr, host.h_addr_list[0], host->h_length); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
+            memcpy((char *) &servAddr.sin_addr.s_addr, host->h_addr_list[0], host->h_length); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
             servAddr.sin_port = htons(porta);
 
             // COMUNICA COM SERVIDOR PARA PESQUISAR O ARQUIVO E SOLICITAR O IP DO SEEDER
@@ -178,8 +178,7 @@ int main(int argc, char** argv) {
                 exit(1);
             }
             servAddr.sin_family = host->h_addrtype;
-            memcpy((char *) &servAddr.sin_addr.s_addr/*PARA QUEM VAO OS DADOS*/,
-                    host.h_addr_list[0] /*DE ONDE VAO OS DADOS*/, host.h_length /*numero de bytes*/); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
+            memcpy((char *) &servAddr.sin_addr.s_addr, host->h_addr_list[0], host->h_length); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
             servAddr.sin_port = htons(porta);
 
 
@@ -282,8 +281,8 @@ int main(int argc, char** argv) {
                 printf("impossivel conectar ao host '%s', Finalizando Programa... \n", ipArq);
                 exit(1);
             }
-            servAddr.sin_family = host.h_addrtype;
-            memcpy((char *) &servAddr.sin_addr.s_addr, host.h_addr_list[0], host.h_length); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
+            servAddr.sin_family = host->h_addrtype;
+            memcpy((char *) &servAddr.sin_addr.s_addr, host->h_addr_list[0], host->h_length); //COPIANDO DADOS DO HOST PARA O END. SERVIDOR
             servAddr.sin_port = htons(porta);
 
             //INICIA O ENVIO DE DADOS
