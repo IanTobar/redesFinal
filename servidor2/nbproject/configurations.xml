@@ -8,7 +8,6 @@
     <logicalFolder name="SourceFiles"
                    displayName="Arquivos de Código-Fonte"
                    projectFiles="true">
-      <itemPath>main.c</itemPath>
       <itemPath>servidor2.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
@@ -37,8 +36,6 @@
       </toolsSet>
       <compileType>
       </compileType>
-      <item path="main.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="servidor2.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
@@ -62,8 +59,6 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
-      <item path="main.c" ex="false" tool="0" flavor2="0">
-      </item>
       <item path="servidor2.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>

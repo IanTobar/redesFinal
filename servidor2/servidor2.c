@@ -22,7 +22,7 @@ typedef struct pacote {
 typedef struct ck {
     int status; // status 1 = ACK 2 = NACK
     int numSeq; ////número de sequência do pacote
-};
+} ck;
 
 long int checksum(char dados[], int tamdados) {
     long int soma;
@@ -124,16 +124,14 @@ char* funcPesquisaArquivo(char* pesquisaArquivo) {
 int main() {
     struct sockaddr_in servAddr, cliAddr;
     pacote pctRec, pctEnv;
-    int sock, numSeq = 0;
+    int sock, numSeq = 0, tam = 16;
     struct timeval tempo;
     char resultadoIP[16];
     //CRIA SOCKET NO SERVIDOR E FAZ SEU BIND PARA RECEBER DADOS ATRAVÉS DELE
     sock = criaSocket(&servAddr, &tempo);
     bindSocket(&servAddr, sock);
-
     //RECEBE SOLICITAÇÃO DO CLIENTE
     recvfrom(sock, &pctRec, sizeof (pctRec), 0, (struct sockaddr *) &servAddr, sizeof (servAddr));
-
     //PRINTA INFORMAÇÕES PARA TESTE
     printf("Origem do cliente %s\n", inet_ntoa(cliAddr.sin_addr));
     printf("mensagem: %s\n", pctRec.dados); //imprime a mensagem
@@ -141,7 +139,7 @@ int main() {
     //chama função para pesquisar o nome do arquivo. Será retornado o IP do cliente que possui arquivo
     strcpy(resultadoIP, funcPesquisaArquivo(pctRec.dados));
 
-    pctEnv = geraPacote(resultadoIP, numSeq, 16);
+    pctEnv = geraPacote(resultadoIP, numSeq, tam);
 
     sendto(sock, &pctEnv, sizeof (pacote), 0, (struct sockaddr *) &cliAddr, sizeof (cliAddr));
 
